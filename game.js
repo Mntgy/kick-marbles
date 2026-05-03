@@ -494,9 +494,19 @@ function generateLevel() {
     finalRamps.push(ramp);
     zigzagWalls.push(ramp);
   }
-  // Bumpers between ramps
-  for (let i=0;i<10;i++) {
-    bumpers.push({x:canvas.width*0.3+Math.random()*canvas.width*0.4,y:18120+i*185,radius:18+Math.random()*10});
+  // Zone 13 replacements: alternating spinners + gravity wells
+  // Spinners placed in the clear gap opposite each ramp's open side
+  for (let i = 0; i < 14; i++) {
+    const fromLeft = i % 2 === 0;
+    // Place spinner on the open/gap side of the ramp, well away from the wall
+    const sx = fromLeft ? canvas.width * 0.72 : canvas.width * 0.28;
+    const sy = 18100 + i * 140 + 50;
+    spinners.push({ x: sx, y: sy, angle: Math.random() * Math.PI * 2, speed: 0.09 + Math.random() * 0.05, size: 45 });
+  }
+  // Gravity wells pinned to the edges (they pull sideways, never block the centre lane)
+  for (let i = 0; i < 7; i++) {
+    const side = i % 2 === 0 ? 28 : canvas.width - 28;
+    gravityWells.push({ x: side, y: 18150 + i * 270, strength: 0.45 });
   }
   // Max speed bars
   for (let i=0;i<14;i++) {
