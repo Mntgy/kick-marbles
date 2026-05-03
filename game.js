@@ -570,6 +570,10 @@ function startRace() {
   prevRanks = {};
   buffs = [];
   hideWinner();
+  document.getElementById("ui-title").style.display = "none";
+  document.getElementById("player-list-wrap").style.display = "none";
+  document.getElementById("hint").style.display = "none";
+  document.getElementById("ui").classList.add("racing");
 }
 
 // ─── Reset ────────────────────────────────────────────────────────────────────
@@ -586,6 +590,10 @@ function resetRace() {
   buffs = [];
   updatePlayerList();
   hideWinner();
+  document.getElementById("ui-title").style.display = "";
+  document.getElementById("player-list-wrap").style.display = "";
+  document.getElementById("hint").style.display = "";
+  document.getElementById("ui").classList.remove("racing");
 }
 
 function showWinner(name) {
@@ -679,7 +687,7 @@ function update() {
     p.stuckDist = (p.stuckDist || 0) + Math.hypot(p.x - (p.prevX || p.x), p.y - (p.prevY || p.y));
     p.prevX = p.x; p.prevY = p.y;
 
-    if (p.stuckTimer % 180 === 0) { // evaluate every 3 seconds
+    if (p.stuckTimer % 300 === 0) { // evaluate every 5 seconds
       const movedDown  = p.y - (p.lastY || p.y);
       const totalPath  = p.stuckDist;
       const frozen     = totalPath < 20;                      // barely moved at all
