@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Kick Marbles</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div id="ui">
+    <div id="ui-title">KICK MARBLES</div>
+    <div class="btn-row">
+      <button class="btn-start" onclick="startRace()">▶ START</button>
+      <button class="btn-reset" onclick="resetRace()">↺ RESET</button>
+    </div>
+    <div id="player-list-wrap">
+      <span id="roster-label">RACERS</span>
+      <div id="player-list"></div>
+    </div>
+    <div id="hint">Press J to add player<br>S to start · R to reset<br>Click marble/bar to spectate<br>← → cycle · A = auto-cam</div>
+  </div>
+
+  <div id="winner-banner">
+    🏆 <span id="winner-name">???</span>
+    <span id="winner-sub">WINS THE RACE</span>
+  </div>
+
+  <div id="legend">
+    <span style="color:#aabbcc">● Peg</span>
+    <span style="color:#e03030">■ Bar</span>
+    <span style="color:cyan">✛ Spinner</span>
+    <span style="color:#44ff88">■ Platform</span>
+    <span style="color:#ff6600">● Bumper</span>
+    <span style="color:#6644ff">● Portal IN</span>
+    <span style="color:#ff8844">● Portal OUT</span>
+    <span style="color:#3366ff">■ Slow</span>
+    <span style="color:red">■ ☠ Kill</span>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

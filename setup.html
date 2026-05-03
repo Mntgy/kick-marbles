@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kick Marbles — Stream Setup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cyan:   #00d4ff;
+      --pink:   #ff2d78;
+      --green:  #00ff9d;
+      --gold:   #ffd700;
+      --bg:     #030510;
+      --panel:  rgba(4,8,24,0.85);
+      --border: rgba(0,212,255,0.18);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: #fff;
+      font-family: 'Share Tech Mono', monospace;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Animated grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: gridDrift 20s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes gridDrift {
+      from { background-position: 0 0; }
+      to   { background-position: 0 40px; }
+    }
+
+    /* Scan line overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px
+      );
+      pointer-events: none;
+      z-index: 99;
+    }
+
+    /* Ambient glow blobs */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      opacity: 0.18;
+    }
+    .blob-1 { width: 600px; height: 600px; background: var(--cyan);  top: -200px; left: -200px; }
+    .blob-2 { width: 500px; height: 500px; background: var(--pink);  bottom: -150px; right: -150px; }
+    .blob-3 { width: 300px; height: 300px; background: var(--green); top: 40%; left: 60%; opacity: 0.1; }
+
+    /* Floating marble animations */
+    .marble {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0.6;
+      animation: float linear infinite;
+    }
+    @keyframes float {
+      0%   { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+      5%   { opacity: 0.6; }
+      95%  { opacity: 0.6; }
+      100% { transform: translateY(-20vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* ── Card ── */
+    .card {
+      position: relative;
+      z-index: 10;
+      width: min(480px, 94vw);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px 44px 40px;
+      backdrop-filter: blur(24px);
+      box-shadow: 0 0 80px rgba(0,212,255,0.07), 0 32px 64px rgba(0,0,0,0.6);
+      animation: cardIn 0.6s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(32px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Top accent bar */
+    .card-accent {
+      position: absolute;
+      top: 0; left: 10%; right: 10%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan), var(--pink), var(--green), transparent);
+      border-radius: 0 0 2px 2px;
+    }
+
+    /* Logo */
+    .logo-wrap { text-align: center; margin-bottom: 36px; }
+    .logo-emoji { font-size: 42px; display: block; margin-bottom: 10px; animation: bounce 2.5s ease-in-out infinite; }
+    @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    .logo-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: var(--cyan);
+      text-shadow: 0 0 24px var(--cyan), 0 0 48px rgba(0,212,255,0.3);
+    }
+    .logo-sub {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 3px;
+      color: rgba(255,255,255,0.35);
+      margin-top: 4px;
+    }
+
+    /* Form */
+    .field { margin-bottom: 20px; }
+    label {
+      display: block;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: rgba(0,212,255,0.6);
+      margin-bottom: 8px;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-prefix {
+      position: absolute;
+      left: 14px;
+      font-size: 13px;
+      color: rgba(0,212,255,0.4);
+      pointer-events: none;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      background: rgba(0,212,255,0.05);
+      border: 1px solid rgba(0,212,255,0.2);
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 14px;
+      padding: 13px 14px 13px 110px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    input[type="text"].no-prefix,
+    input[type="number"].no-prefix {
+      padding-left: 14px;
+    }
+    input:focus {
+      border-color: var(--cyan);
+      background: rgba(0,212,255,0.08);
+      box-shadow: 0 0 0 3px rgba(0,212,255,0.1);
+    }
+    input::placeholder { color: rgba(255,255,255,0.2); }
+    input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    /* Manual ID toggle */
+    .toggle-manual {
+      font-size: 10px;
+      color: rgba(0,212,255,0.4);
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-align: right;
+      display: block;
+      margin-top: 6px;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color 0.15s;
+    }
+    .toggle-manual:hover { color: var(--cyan); }
+
+    /* Status row */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 32px;
+      margin-bottom: 20px;
+      font-size: 12px;
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      flex-shrink: 0;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .status-dot.loading { background: var(--gold); box-shadow: 0 0 8px var(--gold); animation: pulse 1s ease-in-out infinite; }
+    .status-dot.ok      { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .status-dot.err     { background: var(--pink); box-shadow: 0 0 8px var(--pink); }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+    .status-text { color: rgba(255,255,255,0.45); letter-spacing: 1px; font-size: 11px; }
+
+    /* Launch button */
+    .btn-launch {
+      width: 100%;
+      padding: 16px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      background: linear-gradient(135deg, rgba(0,255,157,0.15), rgba(0,212,255,0.1));
+      color: var(--green);
+      border: 1px solid rgba(0,255,157,0.35);
+      text-shadow: 0 0 12px var(--green);
+      box-shadow: 0 0 24px rgba(0,255,157,0.1);
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-launch::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(0,255,157,0.1), transparent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .btn-launch:hover:not(:disabled)::before { opacity: 1; }
+    .btn-launch:hover:not(:disabled) {
+      border-color: var(--green);
+      box-shadow: 0 0 40px rgba(0,255,157,0.25);
+      transform: translateY(-1px);
+    }
+    .btn-launch:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Instructions */
+    .instructions {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+    .inst-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: rgba(0,212,255,0.35);
+      margin-bottom: 12px;
+    }
+    .inst-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      line-height: 1.5;
+    }
+    .inst-num {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: rgba(0,212,255,0.1);
+      border: 1px solid rgba(0,212,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 9px;
+      color: var(--cyan);
+      flex-shrink: 0;
+    }
+
+    /* Error message */
+    .error-msg {
+      display: none;
+      background: rgba(255,45,120,0.08);
+      border: 1px solid rgba(255,45,120,0.3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 11px;
+      color: var(--pink);
+      margin-bottom: 16px;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient blobs -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <div class="card">
+    <div class="card-accent"></div>
+
+    <div class="logo-wrap">
+      <span class="logo-emoji">🎱</span>
+      <div class="logo-title">KICK MARBLES</div>
+      <div class="logo-sub">CHAT-POWERED MARBLE RACE</div>
+    </div>
+
+    <!-- Channel name input -->
+    <div class="field">
+      <label>YOUR KICK CHANNEL</label>
+      <div class="input-wrap">
+        <span class="input-prefix">kick.com/</span>
+        <input type="text" id="channelInput" placeholder="yourchannelname" autocomplete="off" autocapitalize="off" spellcheck="false">
+      </div>
+      <span class="toggle-manual" id="toggleManual">→ enter chatroom ID manually instead</span>
+    </div>
+
+    <!-- Manual chatroom ID (hidden by default) -->
+    <div class="field" id="manualField" style="display:none">
+      <label>CHATROOM ID (MANUAL)</label>
+      <div class="input-wrap">
+        <input type="number" id="chatroomInput" class="no-prefix" placeholder="e.g. 1824041" autocomplete="off">
+      </div>
+      <span class="toggle-manual" id="toggleAuto">← look up by channel name instead</span>
+    </div>
+
+    <!-- Status -->
+    <div class="status-row">
+      <div class="status-dot" id="statusDot"></div>
+      <span class="status-text" id="statusText">Enter your channel name above</span>
+    </div>
+
+    <!-- Error -->
+    <div class="error-msg" id="errorMsg"></div>
+
+    <!-- Launch -->
+    <button class="btn-launch" id="btnLaunch" disabled onclick="launch()">▶ LAUNCH RACE</button>
+
+    <!-- Instructions -->
+    <div class="instructions">
+      <div class="inst-title">HOW IT WORKS</div>
+      <div class="inst-step"><div class="inst-num">1</div><div>Enter your Kick channel name and click Launch Race</div></div>
+      <div class="inst-step"><div class="inst-num">2</div><div>Tell your chat to type <strong style="color:rgba(255,255,255,0.7)">!join</strong> — each chatter gets a marble</div></div>
+      <div class="inst-step"><div class="inst-num">3</div><div>Click <strong style="color:rgba(255,255,255,0.7)">▶ START</strong> in the game when you're ready to race</div></div>
+      <div class="inst-step"><div class="inst-num">4</div><div>Last marble standing wins — share your screen with OBS!</div></div>
+    </div>
+  </div>
+
+  <script>
+    // ── Floating marbles decoration ──────────────────────────────────────────
+    const colors = ["#00d4ff","#ff2d78","#00ff9d","#ffd700","#ff6600","#a044ff"];
+    for (let i = 0; i < 12; i++) {
+      const m = document.createElement("div");
+      m.className = "marble";
+      const size = 8 + Math.random() * 18;
+      m.style.cssText = [
+        `width:${size}px`, `height:${size}px`,
+        `background:${colors[i % colors.length]}`,
+        `left:${Math.random() * 100}vw`,
+        `animation-duration:${8 + Math.random() * 12}s`,
+        `animation-delay:${-Math.random() * 15}s`,
+        `box-shadow:0 0 ${size}px ${colors[i % colors.length]}`,
+        `opacity:${0.3 + Math.random() * 0.4}`
+      ].join(";");
+      document.body.appendChild(m);
+    }
+
+    // ── State ────────────────────────────────────────────────────────────────
+    let resolvedChatroomId = null;
+    let resolvedChannel    = null;
+    let lookupTimeout      = null;
+    let manualMode         = false;
+
+    const channelInput  = document.getElementById("channelInput");
+    const chatroomInput = document.getElementById("chatroomInput");
+    const manualField   = document.getElementById("manualField");
+    const statusDot     = document.getElementById("statusDot");
+    const statusText    = document.getElementById("statusText");
+    const errorMsg      = document.getElementById("errorMsg");
+    const btnLaunch     = document.getElementById("btnLaunch");
+
+    function setStatus(state, text) {
+      statusDot.className = "status-dot" + (state ? " " + state : "");
+      statusText.textContent = text;
+    }
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.style.display = "block";
+    }
+    function clearError() {
+      errorMsg.style.display = "none";
+    }
+    function setReady(chatroomId, channel) {
+      resolvedChatroomId = chatroomId;
+      resolvedChannel    = channel;
+      setStatus("ok", "✓ Channel found — chatroom ID " + chatroomId);
+      btnLaunch.disabled = false;
+      clearError();
+    }
+    function setNotReady() {
+      resolvedChatroomId = null;
+      resolvedChannel    = null;
+      btnLaunch.disabled = true;
+    }
+
+    // ── Toggle manual mode ───────────────────────────────────────────────────
+    document.getElementById("toggleManual").onclick = () => {
+      manualMode = true;
+      manualField.style.display = "block";
+      document.querySelector(".field:first-of-type").style.display = "none";
+      setStatus("", "Enter your chatroom ID manually");
+      setNotReady();
+    };
+    document.getElementById("toggleAuto").onclick = () => {
+      manualMode = false;
+      manualField.style.display = "none";
+      document.querySelector(".field:first-of-type").style.display = "block";
+      setStatus("", "Enter your channel name above");
+      setNotReady();
+    };
+
+    // ── Channel name lookup (debounced) ──────────────────────────────────────
+    channelInput.addEventListener("input", () => {
+      clearTimeout(lookupTimeout);
+      setNotReady();
+      clearError();
+      const val = channelInput.value.trim();
+      if (!val) { setStatus("", "Enter your channel name above"); return; }
+      setStatus("loading", "Looking up channel...");
+      lookupTimeout = setTimeout(() => lookupChannel(val), 700);
+    });
+
+    async function lookupChannel(name) {
+      try {
+        const res  = await fetch("/api/chatroom?channel=" + encodeURIComponent(name));
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          setStatus("err", "Channel not found");
+          showError("Could not find \"" + name + "\" on Kick. Check the spelling and try again.");
+          return;
+        }
+        setReady(data.chatroomId, data.channel);
+      } catch (e) {
+        setStatus("err", "Network error");
+        showError("Could not reach the server. Is it running?");
+      }
+    }
+
+    // ── Manual chatroom ID ───────────────────────────────────────────────────
+    chatroomInput.addEventListener("input", () => {
+      const val = parseInt(chatroomInput.value.trim(), 10);
+      if (!isNaN(val) && val > 0) {
+        setReady(val, "manual-" + val);
+      } else {
+        setNotReady();
+        setStatus("", "Enter your chatroom ID manually");
+      }
+    });
+
+    // ── Launch ───────────────────────────────────────────────────────────────
+    function launch() {
+      if (!resolvedChatroomId) return;
+      const url = "game.html?chatroomId=" + resolvedChatroomId + "&channel=" + encodeURIComponent(resolvedChannel || "");
+      window.location.href = url;
+    }
+
+    // Also allow pressing Enter in the inputs
+    [channelInput, chatroomInput].forEach(el => {
+      el.addEventListener("keydown", e => { if (e.key === "Enter" && !btnLaunch.disabled) launch(); });
+    });
+  </script>
+</body>
+</html>
