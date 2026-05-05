@@ -37,6 +37,7 @@ canvas {
   gap: 8px;
   z-index: 10;
   width: 190px;
+  max-height: calc(100vh - 32px);
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: 10px;
@@ -126,7 +127,7 @@ button.btn-reset:hover {
   flex-direction: column;
   gap: 4px;
   font-size: 11px;
-  max-height: 180px;
+  max-height: calc(100vh - 260px);
   overflow-y: auto;
 }
 

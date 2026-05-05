@@ -22,6 +22,10 @@ let finalRankings = [];
 let spectateIndex = -1; // -1 = auto-follow leader
 let spectateTarget = null; // player being spectated
 
+// ─── Leaderboard expand/collapse ─────────────────────────────────────────────
+let hudExpanded = false;
+let hudScrollOffset = 0; // index of first visible row when expanded
+
 // ─── Commentary feed ─────────────────────────────────────────────────────────
 let commentaryFeed = []; // { text, color, born }
 const COMMENTARY_MAX = 5;
@@ -1513,14 +1517,34 @@ function drawHUD() {
   const barW = 160;
   const barH = 12;
   const margin = 6;
+  const rowH = barH + margin + 16;
   const startX = canvas.width - barW - 16;
 
   // Sort players by rank for display
   const sorted = [...players].sort((a,b) => a.rank - b.rank);
 
-  sorted.forEach((p, i) => {
+  const COLLAPSED_COUNT = 3;
+  const TOGGLE_H = 26;
+  // How many rows fit on screen when expanded
+  const maxFit = Math.max(COLLAPSED_COUNT, Math.floor((canvas.height - 14 - TOGGLE_H) / rowH));
+  const hasMore = sorted.length > COLLAPSED_COUNT;
+
+  // Clamp scroll offset
+  if (hudExpanded) {
+    const maxScroll = Math.max(0, sorted.length - maxFit);
+    hudScrollOffset = Math.max(0, Math.min(hudScrollOffset, maxScroll));
+  } else {
+    hudScrollOffset = 0;
+  }
+
+  const showCount = hudExpanded ? Math.min(maxFit, sorted.length) : Math.min(COLLAPSED_COUNT, sorted.length);
+  const startIdx  = hudExpanded ? hudScrollOffset : 0;
+
+  for (let i = 0; i < showCount; i++) {
+    const p = sorted[startIdx + i];
+    if (!p) break;
     const progress = Math.min(1, p.y / LEVEL_HEIGHT);
-    const y = 14 + i * (barH + margin + 16);
+    const y = 14 + i * rowH;
 
     // Panel BG
     const isSpectated = spectateTarget === p;
@@ -1561,10 +1585,72 @@ function drawHUD() {
     ctx.textAlign = "right";
     ctx.fillText((p.finished ? "✓ " : "") + p.name.substring(0, 13), startX + barW, y - 3);
     ctx.textAlign = "left";
-  });
+  }
+
+  // Expand / collapse toggle button (only when there are more than 3 players)
+  if (hasMore) {
+    const toggleY = 14 + showCount * rowH;
+    const toggleW = barW + 28;
+    const toggleH = 18;
+    const toggleX = startX - 24;
+
+    // Store toggle bounds for click detection
+    drawHUD._toggleBounds = { x: toggleX, y: toggleY - 4, w: toggleW, h: toggleH + 4 };
+
+    ctx.fillStyle = "rgba(4,8,20,0.85)";
+    roundRect(ctx, toggleX, toggleY - 4, toggleW, toggleH + 4, 4);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(0,212,255,0.3)";
+    ctx.lineWidth = 1;
+    roundRect(ctx, toggleX, toggleY - 4, toggleW, toggleH + 4, 4);
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(0,212,255,0.7)";
+    ctx.font = "bold 9px 'Orbitron', monospace";
+    ctx.textAlign = "center";
+
+    if (!hudExpanded) {
+      const remaining = sorted.length - COLLAPSED_COUNT;
+      ctx.fillText(`▼ +${remaining} MORE`, toggleX + toggleW / 2, toggleY + 9);
+    } else {
+      // When expanded show scroll position + SHOW LESS
+      const canScrollUp   = hudScrollOffset > 0;
+      const canScrollDown = hudScrollOffset < sorted.length - maxFit;
+      // Up / down arrows on left side of button
+      const arrowX = toggleX + 14;
+      ctx.fillStyle = canScrollUp ? "rgba(0,212,255,0.9)" : "rgba(0,212,255,0.2)";
+      ctx.fillText("▲", arrowX, toggleY + 9);
+      ctx.fillStyle = canScrollDown ? "rgba(0,212,255,0.9)" : "rgba(0,212,255,0.2)";
+      ctx.fillText("▼", arrowX + 14, toggleY + 9);
+      // Scroll position indicator
+      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.font = "bold 8px 'Share Tech Mono', monospace";
+      ctx.fillText(`${startIdx + 1}–${startIdx + showCount} / ${sorted.length}`, toggleX + toggleW / 2 + 10, toggleY + 9);
+      // SHOW LESS on right
+      ctx.fillStyle = "rgba(0,212,255,0.7)";
+      ctx.font = "bold 9px 'Orbitron', monospace";
+      ctx.textAlign = "right";
+      ctx.fillText("▲ LESS", toggleX + toggleW - 4, toggleY + 9);
+    }
+    ctx.textAlign = "left";
+
+    // Store scroll arrow bounds for click detection
+    if (hudExpanded) {
+      const arrowX = toggleX + 7;
+      drawHUD._scrollUpBounds   = { x: arrowX,      y: toggleY - 4, w: 14, h: toggleH + 4 };
+      drawHUD._scrollDownBounds = { x: arrowX + 14, y: toggleY - 4, w: 14, h: toggleH + 4 };
+    } else {
+      drawHUD._scrollUpBounds   = null;
+      drawHUD._scrollDownBounds = null;
+    }
+  } else {
+    drawHUD._toggleBounds     = null;
+    drawHUD._scrollUpBounds   = null;
+    drawHUD._scrollDownBounds = null;
+  }
 
   // Spectate hint
-  const hintY = 14 + sorted.length * (barH + margin + 16) + 8;
+  const hintY = 14 + showCount * rowH + (hasMore ? 28 : 8);
   ctx.fillStyle = "rgba(255,255,255,0.25)";
   ctx.font = "9px 'Share Tech Mono', monospace";
   ctx.textAlign = "right";
@@ -1686,15 +1772,42 @@ canvas.addEventListener("click", e => {
   const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
   const my = (e.clientY - rect.top) * (canvas.height / rect.height);
 
+  // Check if click is on expand/collapse toggle
+  const tb = drawHUD._toggleBounds;
+  if (tb && mx >= tb.x && mx <= tb.x + tb.w && my >= tb.y && my <= tb.y + tb.h) {
+    // Check scroll up arrow first
+    const sub = drawHUD._scrollUpBounds;
+    const sdb = drawHUD._scrollDownBounds;
+    if (sub && mx >= sub.x && mx <= sub.x + sub.w) {
+      hudScrollOffset = Math.max(0, hudScrollOffset - 1);
+      return;
+    }
+    if (sdb && mx >= sdb.x && mx <= sdb.x + sdb.w) {
+      hudScrollOffset++;
+      return;
+    }
+    // Otherwise toggle expand/collapse
+    hudExpanded = !hudExpanded;
+    hudScrollOffset = 0;
+    return;
+  }
+
   // Check if click is on HUD bars (right side)
   const barW = 160, barH = 12, margin = 6;
+  const rowH = barH + margin + 16;
   const startX = canvas.width - barW - 40;
   const sorted = [...players].sort((a,b) => a.rank - b.rank);
-  for (let i = 0; i < sorted.length; i++) {
-    const barY = 14 + i * (barH + margin + 16) - 14;
+  const COLLAPSED_COUNT_CL = 3;
+  const TOGGLE_H_CL = 26;
+  const maxFitCL = Math.max(COLLAPSED_COUNT_CL, Math.floor((canvas.height - 14 - TOGGLE_H_CL) / rowH));
+  const expandedCountCL = Math.min(sorted.length, maxFitCL);
+  const showCount = hudExpanded ? expandedCountCL : Math.min(COLLAPSED_COUNT_CL, sorted.length);
+  const startIdx = hudExpanded ? hudScrollOffset : 0;
+  for (let i = 0; i < showCount; i++) {
+    const barY = 14 + i * rowH - 14;
     if (mx >= startX && mx <= canvas.width - 10 && my >= barY && my <= barY + barH + 18) {
-      spectateIndex = players.indexOf(sorted[i]);
-      spectateTarget = sorted[i];
+      const p = sorted[startIdx + i];
+      if (p) { spectateIndex = players.indexOf(p); spectateTarget = p; }
       return;
     }
   }
@@ -1714,6 +1827,22 @@ canvas.addEventListener("click", e => {
     spectateTarget = null;
   }
 });
+
+// ─── HUD scroll via mouse wheel ───────────────────────────────────────────────
+canvas.addEventListener("wheel", e => {
+  if (!hudExpanded) return;
+  const tb = drawHUD._toggleBounds;
+  if (!tb) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+  // Only intercept if mouse is over the HUD panel (right side)
+  const hudLeft = canvas.width - 160 - 16 - 28;
+  if (mx < hudLeft) return;
+  e.preventDefault();
+  hudScrollOffset += e.deltaY > 0 ? 1 : -1;
+  hudScrollOffset = Math.max(0, hudScrollOffset);
+}, { passive: false });
 
 // ─── Dev shortcuts ────────────────────────────────────────────────────────────
 window.addEventListener("keydown", e => {
