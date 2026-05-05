@@ -600,11 +600,15 @@ function showWinner(name) {
   // Only show mid-race winner toast for 1st finisher; final screen shown later
   document.getElementById("winner-name").textContent = name;
   document.getElementById("winner-sub").textContent = "WINS THE RACE";
+  // Clear any scroll list from a previous final rankings display
+  const scrollEl = document.getElementById("winner-rankings-scroll");
+  if (scrollEl) scrollEl.remove();
   const el = document.getElementById("winner-banner");
-  el.style.display = "block";
+  el.style.display = "";
+  el.classList.add("visible");
   // Auto-hide after 4s if race still going
   setTimeout(() => {
-    if (!raceFinished) el.style.display = "none";
+    if (!raceFinished) hideWinner();
   }, 4000);
 }
 
@@ -614,17 +618,27 @@ function showFinalRankings() {
   const subEl = document.getElementById("winner-sub");
   const medals = ["🥇","🥈","🥉"];
   const rows = finalRankings.map((p,i) =>
-    `<div style="font-size:${i===0?'28px':'18px'};color:${i===0?'#ffd700':i===1?'#ccc':i===2?'#cd7f32':'rgba(255,255,255,0.7)'};margin:4px 0">
+    `<div style="font-size:${i===0?'24px':'16px'};color:${i===0?'#ffd700':i===1?'#ccc':i===2?'#cd7f32':'rgba(255,255,255,0.7)'};margin:4px 0;white-space:nowrap">
       ${medals[i]||`#${i+1}`} ${p.name}
     </div>`
   ).join("");
-  nameEl.innerHTML = `🏁 FINAL RANKINGS<br><div style="font-size:16px;margin-top:12px">${rows}</div>`;
+  nameEl.innerHTML = `🏁 FINAL RANKINGS`;
   subEl.textContent = "";
-  el.style.display = "block";
+  // Inject scrollable list into dedicated scroll container
+  let scrollEl = document.getElementById("winner-rankings-scroll");
+  if (!scrollEl) {
+    scrollEl = document.createElement("div");
+    scrollEl.id = "winner-rankings-scroll";
+    el.appendChild(scrollEl);
+  }
+  scrollEl.innerHTML = `<div style="font-size:14px;margin-top:4px">${rows}</div>`;
+  el.style.display = "";
+  el.classList.add("visible");
 }
 
 function hideWinner() {
-  document.getElementById("winner-banner").style.display = "none";
+  const el = document.getElementById("winner-banner");
+  el.classList.remove("visible");
 }
 
 function updatePlayerList() {
