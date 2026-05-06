@@ -9,7 +9,14 @@
   <canvas id="game"></canvas>
 
   <div id="ui">
-    <div id="ui-title">KICK MARBLES</div>
+    <div id="ui-title">🎱 KICK MARBLES</div>
+
+    <!-- Map selector -->
+    <div class="map-row">
+      <button id="map-btn-default" class="btn-map active" onclick="selectMap('default')">🎱 Default</button>
+      <button id="map-btn-bahamas" class="btn-map"        onclick="selectMap('bahamas')">🏝️ Bahamas</button>
+    </div>
+
     <div class="btn-row">
       <button class="btn-start" onclick="startRace()">▶ START</button>
       <button class="btn-reset" onclick="resetRace()">↺ RESET</button>

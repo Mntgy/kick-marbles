@@ -142,6 +142,41 @@ button.btn-reset:hover {
   line-height: 1.5;
 }
 
+.map-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+button.btn-map {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 7px 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  transition: all 0.15s ease;
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.4);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+button.btn-map:hover {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+  border-color: rgba(255,255,255,0.3);
+}
+
+button.btn-map.active {
+  background: linear-gradient(135deg, rgba(0,212,255,0.18), rgba(0,212,255,0.06));
+  color: var(--neon-blue);
+  border: 1px solid rgba(0,212,255,0.5);
+  text-shadow: 0 0 8px var(--neon-blue);
+  box-shadow: 0 0 12px rgba(0,212,255,0.15);
+}
+
 #winner-banner {
   display: none;
   position: fixed;
